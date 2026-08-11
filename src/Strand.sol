@@ -50,6 +50,9 @@ function concat(Strand left, Strand right) pure returns (Strand strand) {
 //--------------------//  INTERNAL  //--------------------//
 
 struct _Strand {
+  /// Cached total so buildString can reserve the output buffer once —
+  /// measured cheaper than a sizing pass or letting the buffer grow.
+  /// Open-ended bytecode parts contribute 0 (size unknown until render).
   uint256 length;
   _Part[] parts;
 }
