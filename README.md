@@ -7,9 +7,11 @@ simpler solidity strings
 Lazy, gas-conscious string building for on-chain metadata (`tokenURI` and friends). A `Strand` is a list of parts — inline bytes (`s("…")`) or references to contract bytecode (`bytecode(…)`, `ethfs(…)`) — that only materializes into one string when you call `toString()`. Bytecode parts are read with `EXTCODECOPY` at render time, so composing a strand costs almost nothing regardless of how much data it references.
 
 ```solidity
-Strand page = s('<script src="data:text/javascript;base64,') + ethfs("three.min.js") + s('"></script>');
-Strand metadata = s('{"name":"Token","animation_url":"data:text/html,') + page.encodeURI() + s('"}');
-return (s("data:application/json,") + metadata.encodeURI()).toString();
+Strand script = s('<script src="data:text/javascript;base64,') + ethfs("three.min.js") + s('"></script>');
+Strand html = s('<html><head></head><body>') + script + s('</body></html>');
+Strand metadata = s('{"name":"Token","animation_url":"data:text/html,') + html.encodeURI() + s('"}');
+Strand uri = s("data:application/json,") + metadata.encodeURI();
+return uri.toString();
 ```
 
 Coming from scripty.sol? See [docs/migrate-from-scripty.md](docs/migrate-from-scripty.md) for a concept mapping and measured gas comparison.
