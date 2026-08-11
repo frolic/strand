@@ -64,8 +64,8 @@ Strand:
 
 ```solidity
 Strand script = s('<script src="data:text/javascript;base64,') + ethfs("three.min.js") + s('"></script>');
-Strand page = s('<html><head></head><body>') + script + s('</body></html>');
-Strand metadata = s('{"name":"Token","animation_url":"data:text/html,') + page.encodeURI() + s('"}');
+Strand html = s('<html><head></head><body>') + script + s('</body></html>');
+Strand metadata = s('{"name":"Token","animation_url":"data:text/html,') + html.encodeURI() + s('"}');
 Strand uri = s("data:application/json,") + metadata.encodeURI();
 return uri.toString();
 ```
