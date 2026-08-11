@@ -2,7 +2,10 @@
 src = "src"
 out = "out"
 libs = ["lib"]
-test = "src"
+# the whole repo is the test tree (colocated tests in src/, plus audits/ and
+# benchmarks/); skip stops forge from compiling lib internals nobody imports
+test = "."
+skip = ["lib/**"]
 script = "script"
 solc = "0.8.24"
 isolate = true
