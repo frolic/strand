@@ -35,7 +35,7 @@ The absolute numbers matter post-Fusaka: [EIP-7825](https://eips.ethereum.org/EI
 | `HTMLTagType.scriptGZIPBase64DataURI` | same, with `type="text/javascript+gzip"` in your literal |
 | `getHTMLURLSafe` | compose, then `.encodeURI()` — or author literals pre-encoded (like scripty's wrappers) and skip it |
 | `getHTML` (raw) | compose, then `.toString()` |
-| `getEncodedHTML` (base64 of whole page) | `Base64.encode(bytes(page.toString()))` (e.g. solady) — no lazy equivalent |
+| `getEncodedHTML` (base64 of whole page) | prefer `encodeURI()`: already-base64 payloads pass through at 1× growth and zero work, while whole-page base64 re-encodes them at 4/3. If you truly need it: `Base64.encode(bytes(page.toString()))` (e.g. solady) |
 | deployed builder + storage contracts | a library compiled into your contract; the only external reads are the data contracts themselves |
 
 ## Before / after
