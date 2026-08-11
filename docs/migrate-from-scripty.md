@@ -63,11 +63,11 @@ return string(
 Strand:
 
 ```solidity
-Strand page = s('<html><head></head><body><script src="data:text/javascript;base64,')
-  + ethfs("three.min.js")
-  + s('"></script></body></html>');
+Strand script = s('<script src="data:text/javascript;base64,') + ethfs("three.min.js") + s('"></script>');
+Strand page = s('<html><head></head><body>') + script + s('</body></html>');
 Strand metadata = s('{"name":"Token","animation_url":"data:text/html,') + page.encodeURI() + s('"}');
-return (s("data:application/json,") + metadata.encodeURI()).toString();
+Strand uri = s("data:application/json,") + metadata.encodeURI();
+return uri.toString();
 ```
 
 Note the JSON is plain text — `encodeURI()` does the escaping that scripty required you to hand-encode (`%7B%22name%22...`) in a comment-annotated blob.
