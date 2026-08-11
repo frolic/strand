@@ -37,7 +37,7 @@ function sstore2(address location) pure returns (Strand strand) {
 /// Flattens a strand into self-contained bytes that can cross external call
 /// boundaries: inline parts travel by value, bytecode parts as small
 /// (pointer, start, end) references that stay valid everywhere. Rebuild with
-/// `deserialize` — which trusts the pointers, so only deserialize recipes
+/// `deserialize` — which trusts the pointers, so only deserialize bytes
 /// from senders you trust.
 function serialize(Strand strand) pure returns (bytes memory data) {
   return abi.encode(_unwrap(strand));

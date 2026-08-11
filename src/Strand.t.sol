@@ -26,13 +26,14 @@ contract StrandTest is Test {
   }
 
   /// Serializes in one call frame, deserializes and keeps composing in
-  /// another — the recipe crosses boundaries that a raw Strand cannot.
+  /// another — the serialized form crosses boundaries that a raw Strand
+  /// cannot.
   function testSerializeAcrossFrames() public {
-    Strand strand = deserialize(this.makeRecipe());
+    Strand strand = deserialize(this.serializeStrand());
     assertEq((strand + s("!")).toString(), "hello%200123456789!");
   }
 
-  function makeRecipe() external returns (bytes memory recipe) {
+  function serializeStrand() external returns (bytes memory serialized) {
     address pointer = SSTORE2.write("0123456789");
     return serialize((s("hello ") + sstore2(pointer)).encodeURI());
   }
