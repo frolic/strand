@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import { File } from "ethfs/src/File.sol";
 import { IFileStore } from "ethfs/src/IFileStore.sol";
 
-import { Strand, _Part, _Strand, _wrap } from "../src/Strand.sol";
+import { Strand, _Part, _Strand, _wrap } from "./Strand.sol";
 
 IFileStore constant fileStore = IFileStore(0xFe1411d6864592549AdE050215482e4385dFa0FB);
 

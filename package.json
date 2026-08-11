@@ -5,7 +5,9 @@
   "description": "simpler solidity strings",
   "files": [
     "src",
-    "lib"
+    "!src/**/*.t.sol",
+    "lib/solady",
+    "lib/ethfs"
   ],
   "repository": {
     "type": "git",

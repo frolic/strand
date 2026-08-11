@@ -21,10 +21,14 @@ function _encodeURI(bytes2 kind, uint256 length, bytes memory data) pure returns
     bytes memory encoded = bytes(LibString.encodeURIComponent(string(data)));
     return (kind, encoded.length, encoded);
   }
+  // Bytecode parts pass through unencoded: their content can't be encoded
+  // without materializing it, and the library can't know whether it's already
+  // URI-safe. It's the caller's responsibility to only reference URI-safe
+  // content (e.g. base64) from strands they intend to encode — see README.
   return (kind, length, data);
 }
 
-function _toString(bytes2 kind, uint256 length, bytes memory data) view returns (string memory out) {
+function _toString(bytes2 kind, uint256, bytes memory data) view returns (string memory out) {
   if (kind == "by") {
     return string(data);
   }
@@ -41,7 +45,9 @@ function _codeSlice(address pointer, uint256 start, uint256 end) view returns (b
     let size := extcodesize(pointer)
     if iszero(end) { end := size }
 
-    if gt(end, size) { revert(0, 0) } // optional: bounds check
+    // Bounds check: end past code would silently zero-pad the string, and
+    // start past end would underflow the length below.
+    if or(gt(end, size), gt(start, end)) { revert(0, 0) }
 
     let length := sub(end, start)
     out := mload(0x40)
