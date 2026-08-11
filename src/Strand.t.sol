@@ -7,7 +7,7 @@ import { Base64 } from "strand~solady/utils/Base64.sol";
 import { LibString } from "strand~solady/utils/LibString.sol";
 import { SSTORE2 } from "strand~solady/utils/SSTORE2.sol";
 
-import { Strand, deserialize, s, sstore2 } from "./Strand.sol";
+import { Strand, deserialize, s, serialize, sstore2 } from "./Strand.sol";
 
 contract StrandTest is Test {
   function testString() public view {
@@ -34,7 +34,7 @@ contract StrandTest is Test {
 
   function makeRecipe() external returns (bytes memory recipe) {
     address pointer = SSTORE2.write("0123456789");
-    return (s("hello ") + sstore2(pointer)).encodeURI().serialize();
+    return serialize((s("hello ") + sstore2(pointer)).encodeURI());
   }
 
   function testTokenURI() public {

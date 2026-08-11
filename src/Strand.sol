@@ -5,7 +5,7 @@ import { encodeURI, toString } from "./transforms.sol";
 
 type Strand is uint256;
 
-using { concat as +, encodeURI, serialize, toString } for Strand global;
+using { concat as +, encodeURI, toString } for Strand global;
 
 function s(string memory contents) pure returns (Strand strand) {
   _Strand memory _strand;

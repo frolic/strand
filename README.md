@@ -24,7 +24,7 @@ The gas savings come from carrying references instead of copying. That has conse
 
   ```solidity
   // sender: serialize the recipe (stays small no matter how big the referenced data is)
-  bytes memory recipe = strand.serialize();
+  bytes memory recipe = serialize(strand);
 
   // receiver: rebuild in this frame's memory and keep composing lazily
   Strand strand = deserialize(recipe);
