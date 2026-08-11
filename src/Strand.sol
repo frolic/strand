@@ -5,7 +5,7 @@ import { encodeURI, toString } from "./transforms.sol";
 
 type Strand is uint256;
 
-using { concat as +, encodeURI, toString } for Strand global;
+using { concat as +, encodeURI, serialize, toString } for Strand global;
 
 function s(string memory contents) pure returns (Strand strand) {
   _Strand memory _strand;
@@ -16,19 +16,35 @@ function s(string memory contents) pure returns (Strand strand) {
 }
 
 function bytecode(address location) pure returns (Strand strand) {
-  return bytecode(location, 0, 0);
+  return _bytecode(location, 0, 0);
 }
 
 function bytecode(address location, uint256 start) pure returns (Strand strand) {
-  return bytecode(location, start, 0);
+  return _bytecode(location, start, 0);
 }
 
 function bytecode(address location, uint256 start, uint256 end) pure returns (Strand strand) {
-  _Strand memory _strand;
-  _strand.parts = new _Part[](1);
-  _strand.parts[0] = _Part("bc", end > start ? end - start : 0, abi.encode(location, start, end));
-  _strand.length = _strand.parts[0].length;
-  return _wrap(_strand);
+  if (end <= start) revert("Invalid bytecode range");
+  return _bytecode(location, start, end);
+}
+
+/// Reads an SSTORE2-style data contract, skipping the STOP byte that guards
+/// the data from execution.
+function sstore2(address location) pure returns (Strand strand) {
+  return _bytecode(location, 1, 0);
+}
+
+/// Flattens a strand into self-contained bytes that can cross external call
+/// boundaries: inline parts travel by value, bytecode parts as small
+/// (pointer, start, end) references that stay valid everywhere. Rebuild with
+/// `deserialize` — which trusts the pointers, so only deserialize recipes
+/// from senders you trust.
+function serialize(Strand strand) pure returns (bytes memory data) {
+  return abi.encode(_unwrap(strand));
+}
+
+function deserialize(bytes memory data) pure returns (Strand strand) {
+  return _wrap(abi.decode(data, (_Strand)));
 }
 
 function concat(Strand left, Strand right) pure returns (Strand strand) {
@@ -61,6 +77,14 @@ struct _Part {
   bytes2 kind;
   uint256 length;
   bytes data;
+}
+
+function _bytecode(address location, uint256 start, uint256 end) pure returns (Strand strand) {
+  _Strand memory _strand;
+  _strand.parts = new _Part[](1);
+  _strand.parts[0] = _Part("bc", end > start ? end - start : 0, abi.encode(location, start, end));
+  _strand.length = _strand.parts[0].length;
+  return _wrap(_strand);
 }
 
 function _unwrap(Strand strand) pure returns (_Strand memory _strand) {

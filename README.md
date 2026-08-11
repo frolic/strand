@@ -20,17 +20,17 @@ Coming from scripty.sol? See [docs/migrate-from-scripty.md](docs/migrate-from-sc
 
 The gas savings come from carrying references instead of copying. That has consequences worth knowing before use:
 
-- **To save gas, a `Strand` is a memory pointer — so it can't be used across contract boundaries.** Internal calls share one memory space, so strands flow freely through them, but never use a `Strand` as a public/external parameter or return type, and never store one: ABI-encoding it sends the raw pointer, and the receiving frame dereferences its own unrelated memory. When a strand does need to cross a boundary, encode/decode the underlying struct — this serializes the *recipe* rather than the pointer, and stays small and lazy because inline literals travel by value while bytecode parts travel as `(pointer, start, end)` references, valid everywhere since contract code is global state:
+- **To save gas, a `Strand` is a memory pointer — so it can't be used across contract boundaries.** Internal calls share one memory space, so strands flow freely through them, but never use a `Strand` as a public/external parameter or return type, and never store one: ABI-encoding it sends the raw pointer, and the receiving frame dereferences its own unrelated memory. When a strand does need to cross a boundary, pass its serialized *recipe* rather than the pointer — small and still lazy, because inline literals travel by value while bytecode parts travel as `(pointer, start, end)` references, valid everywhere since contract code is global state:
 
   ```solidity
   // sender: serialize the recipe (stays small no matter how big the referenced data is)
-  bytes memory recipe = abi.encode(_unwrap(strand));
+  bytes memory recipe = strand.serialize();
 
-  // receiver: decode into this frame's memory and keep composing lazily
-  Strand strand = _wrap(abi.decode(recipe, (_Strand)));
+  // receiver: rebuild in this frame's memory and keep composing lazily
+  Strand strand = deserialize(recipe);
   ```
 
-  The receiver inherits trust in the pointers — only decode recipes from senders you trust.
+  The receiver inherits trust in the pointers — only deserialize recipes from senders you trust.
 - **Materialize with `toString()` as late as possible, exactly once.** The materialization is where the gas goes — memory expansion and copying scale with output size, and pushing a materialized string across an external call pays the full ABI round-trip on top. Compose lazily (and cross boundaries as recipes) until the final consumer, then render.
 - **Parts are shared, not copied.** `+`/`concat` copies part pointers, and `s()` keeps a reference to your string (mutating the original changes the strand). Transforms like `encodeURI` are copy-on-write: they return a new strand and never mutate their input, so sharing is safe as long as you don't mutate source strings yourself.
 - **`encodeURI` only encodes inline (`s`) parts.** Bytecode parts pass through untouched — encoding them would mean materializing the referenced code, and the library has no way to know whether code is already URI-safe. That makes URI safety *your* invariant: only reference URI-safe content (e.g. base64 — whose `+` `/` `=` are tolerated in data-URI paths, if not spec-perfect percent-encoding) from strands you intend to `encodeURI`. Get it wrong and the URI is silently malformed.

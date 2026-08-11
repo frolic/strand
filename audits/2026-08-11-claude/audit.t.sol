@@ -116,8 +116,14 @@ contract AuditTest is Test {
   // Pitfall: _codeSlice bounds behaviors //
   //--------------------------------------//
 
-  /// Out-of-range slices revert cleanly at render: end past the code (which
-  /// would otherwise silently zero-pad) and start past end (which would
+  /// Renders an open-ended bytecode strand in an external frame.
+  function buildAndRenderOpenEnded(address pointer, uint256 start) external view returns (string memory) {
+    return bytecode(pointer, start).toString();
+  }
+
+  /// Ranges that can only be found invalid against the actual code size
+  /// revert cleanly at render: end past the code (which would otherwise
+  /// silently zero-pad) and an open-ended start past the code (which would
   /// otherwise underflow into a ~2^256 extcodecopy).
   function test_codeSliceOutOfRangeReverts() public {
     address pointer = SSTORE2.write("0123456789");
@@ -127,22 +133,22 @@ contract AuditTest is Test {
     this.buildAndRender(pointer, 0, size + 1);
 
     vm.expectRevert(bytes(""));
-    this.buildAndRender(pointer, 8, 3);
-
-    // start past size with end defaulted to size.
-    vm.expectRevert(bytes(""));
-    this.buildAndRender(pointer, size + 1, 0);
+    this.buildAndRenderOpenEnded(pointer, size + 1);
   }
 
-  /// The `bytecode` constructors don't validate the range (that would cost an
-  /// extcodesize per part at build time), so a bad range is only caught when
-  /// the strand is rendered.
-  function test_pitfall_bytecodeConstructorAcceptsInvertedRange() public {
+  /// Ranges that are invalid on their face (end <= start) revert at
+  /// construction, where the stack trace is useful; only size-dependent
+  /// checks are deferred to render.
+  function test_bytecodeConstructorRejectsInvalidRange() public {
     address pointer = SSTORE2.write("0123456789");
-    Strand strand = bytecode(pointer, 8, 3);
-    assertEq(_unwrap(strand).length, 0); // claims empty at build time...
-    vm.expectRevert(bytes(""));
-    this.buildAndRender(pointer, 8, 3); // ...and reverts at render time
+
+    vm.expectRevert("Invalid bytecode range");
+    this.buildAndRender(pointer, 8, 3);
+
+    // end == 0 is not an open-ended sentinel in the three-arg form; use
+    // bytecode(location) or bytecode(location, start) for "to end of code".
+    vm.expectRevert("Invalid bytecode range");
+    this.buildAndRender(pointer, 5, 0);
   }
 
   //---------------------------------------------//
