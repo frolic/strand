@@ -7,7 +7,7 @@ import { Base64 } from "strand~solady/utils/Base64.sol";
 import { LibString } from "strand~solady/utils/LibString.sol";
 import { SSTORE2 } from "strand~solady/utils/SSTORE2.sol";
 
-import { Strand, bytecode, s } from "./Strand.sol";
+import { Strand, deserialize, s, serialize, sstore2 } from "./Strand.sol";
 
 contract StrandTest is Test {
   function testString() public view {
@@ -20,10 +20,28 @@ contract StrandTest is Test {
     assertEq(out.toString(), "helloworld");
   }
 
+  function testSstore2() public {
+    address pointer = SSTORE2.write("0123456789");
+    assertEq(sstore2(pointer).toString(), "0123456789");
+  }
+
+  /// Serializes in one call frame, deserializes and keeps composing in
+  /// another — the serialized form crosses boundaries that a raw Strand
+  /// cannot.
+  function testSerializeAcrossFrames() public {
+    Strand strand = deserialize(this.serializeStrand());
+    assertEq((strand + s("!")).toString(), "hello%200123456789!");
+  }
+
+  function serializeStrand() external returns (bytes memory serialized) {
+    address pointer = SSTORE2.write("0123456789");
+    return serialize((s("hello ") + sstore2(pointer)).encodeURI());
+  }
+
   function testTokenURI() public {
     address script = SSTORE2.write(bytes(Base64.encode('alert("hello world")')));
 
-    Strand page = s('<script src="data:text/javascript;base64,') + bytecode(script, 1) + s('"></script>');
+    Strand page = s('<script src="data:text/javascript;base64,') + sstore2(script) + s('"></script>');
     Strand metadata = s('{"name":"Token","animation_url":"data:text/html,') + page.encodeURI() + s('"}');
     Strand uri = s("data:application/json,") + metadata.encodeURI();
 
