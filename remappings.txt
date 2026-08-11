@@ -2,3 +2,4 @@ ethfs/=lib/ethfs/packages/contracts/
 solady/=lib/ethfs/packages/contracts/lib/solady/src/
 
 strand~solady/=lib/solady/src/
+scripty/=lib/scripty/contracts/scripty/
